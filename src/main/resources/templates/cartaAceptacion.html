@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Carta de Aceptación</title>
+</head>
+<body>
+<h1>CONSTANCIA DE ACEPTACIÓN</h1>
+<p>A quien corresponda,</p>
+<p>
+    Por la presente, la <strong th:text="${fundacion}"></strong>, identificada con RUC
+    N° <strong th:text="${ruc}"></strong>, deja constancia de la aceptación de
+    <strong th:text="${nombre}"></strong>, portador del DNI N°
+    <strong th:text="${dni}"></strong>, para realizar <strong th:text="${practicas}"></strong>
+    en el área de <strong th:text="${area}"></strong>.
+</p>
+<p>
+    La práctica iniciará el día <strong th:text="${inicio}"></strong> y finalizará el
+    <strong th:text="${fin}"></strong>.
+</p>
+<p>Atentamente,</p>
+<p><strong th:text="${firma}"></strong></p>
+<p><strong th:text="${lugar_fecha}"></strong></p>
+</body>
+</html>
