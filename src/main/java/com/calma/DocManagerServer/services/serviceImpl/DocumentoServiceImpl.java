@@ -1,12 +1,11 @@
 package com.calma.DocManagerServer.services.serviceImpl;
 
-import com.calma.DocManagerServer.services.PdfService;
+import com.calma.DocManagerServer.services.DocumentoService;
 import com.itextpdf.html2pdf.HtmlConverter;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.ResponseEntity;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
@@ -18,16 +17,17 @@ import java.io.IOException;
 import java.util.Map;
 @Service
 @RequiredArgsConstructor
-public class PdfServiceImpl implements PdfService {
+public class DocumentoServiceImpl implements DocumentoService {
     @Autowired
     private TemplateEngine templateEngine;
     @Autowired
     private JavaMailSender mailSender;
     @Override
     public void generarPdf(Map<String, Object> datos, String outputPath) throws IOException {
+
+
         String htmlContent = processThymeleafTemplate("cartaAceptacion", datos);
 
-        // Convertir el HTML generado en un archivo PDF
         HtmlConverter.convertToPdf(htmlContent, new FileOutputStream(outputPath));
 
     }
@@ -38,9 +38,9 @@ public class PdfServiceImpl implements PdfService {
         return templateEngine.process(templateName, context); // Procesar plantilla y devolver HTML
     }
 
+
     @Override
     public void enviarCarta(String email, String downloadUrl) throws MessagingException {
-        // Enviar correo con carta de aceptación adjunta
         try {
 
             String htmlContent = "<h1>Carta de Aceptación</h1>" +
