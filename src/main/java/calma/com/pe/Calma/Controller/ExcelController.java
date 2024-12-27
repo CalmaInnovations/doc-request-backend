@@ -1,7 +1,6 @@
 package calma.com.pe.Calma.Controller;
 
-import calma.com.pe.Calma.Services.BuscarService;
-import calma.com.pe.Calma.Services.ProcesarService;
+import calma.com.pe.Calma.Services.serviceImpl.BuscarService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
