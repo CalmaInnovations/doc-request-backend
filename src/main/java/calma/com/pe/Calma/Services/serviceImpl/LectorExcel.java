@@ -27,7 +27,7 @@ public class LectorExcel implements ILectorExcel {
             for (int i = 1; i <= sheet.getLastRowNum(); i++) {
                 Row row = sheet.getRow(i);
 
-                if (row == null) continue; // Saltar filas vacías
+                if (row == null) continue;
 
                 try {
                     DatosDTO datosDTO = new DatosDTO();
@@ -48,23 +48,23 @@ public class LectorExcel implements ILectorExcel {
 
                     datosList.add(datosDTO);
                 } catch (IllegalArgumentException e) {
-                    System.err.println("Error en la fila " + (i + 1) + ": " + e.getMessage());
+                    throw new RuntimeException("Error en la fila " + (i + 1) + ": " + e.getMessage());
                 }
             }
 
         } catch (IOException e) {
             e.printStackTrace();
-            System.out.println("Error al leer el archivo Excel: " + e.getMessage());
+            throw new RuntimeException("Error al leer el archivo Excel: " + e.getMessage());
         }
 
         return datosList;
     }
 
-    private String getCellValueAsString(Cell cell, String fieldName){
-        if (cell == null || cell.getCellType() == CellType.BLANK){
+    private String getCellValueAsString(Cell cell, String fieldName) {
+        if (cell == null || cell.getCellType() == CellType.BLANK) {
             throw new IllegalArgumentException(fieldName + " esta vacío");
         }
-        if (cell.getCellType() == CellType.STRING){
+        if (cell.getCellType() == CellType.STRING) {
             return cell.getStringCellValue().trim();
         } else if (cell.getCellType() == CellType.NUMERIC) {
             return String.valueOf((long) cell.getNumericCellValue());
@@ -73,8 +73,8 @@ public class LectorExcel implements ILectorExcel {
         }
     }
 
-    private LocalDate getCellValueAsDate(Cell cell, String fieldName){
-        if (cell == null || cell.getCellType() != CellType.NUMERIC || !DateUtil.isCellDateFormatted(cell)){
+    private LocalDate getCellValueAsDate(Cell cell, String fieldName) {
+        if (cell == null || cell.getCellType() != CellType.NUMERIC || !DateUtil.isCellDateFormatted(cell)) {
             throw new IllegalArgumentException(fieldName + " la fecha no es valida");
         }
         return cell.getLocalDateTimeCellValue().toLocalDate();
