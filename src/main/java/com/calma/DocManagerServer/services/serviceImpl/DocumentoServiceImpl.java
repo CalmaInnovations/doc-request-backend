@@ -2,6 +2,10 @@ package com.calma.DocManagerServer.services.serviceImpl;
 
 import com.calma.DocManagerServer.services.DocumentoService;
 import com.itextpdf.html2pdf.HtmlConverter;
+import com.itextpdf.kernel.geom.PageSize;
+import com.itextpdf.kernel.pdf.PdfDocument;
+import com.itextpdf.kernel.pdf.PdfWriter;
+import com.itextpdf.layout.Document;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
 import lombok.RequiredArgsConstructor;
@@ -32,7 +36,12 @@ public class DocumentoServiceImpl implements DocumentoService {
     @Override
     public String generarPdf(Map<String, Object> datos, String outputPath) {
         try (FileOutputStream fos = new FileOutputStream(outputPath)) {
-            String htmlContent = processThymeleafTemplate("cartaAceptacion", datos);
+            String htmlContent = processThymeleafTemplate("templateCartaAceptacion", datos);
+            PdfWriter writer = new PdfWriter(fos);
+            PdfDocument pdfDoc = new PdfDocument(writer);
+            pdfDoc.setDefaultPageSize(PageSize.A4);
+            Document document = new Document(pdfDoc);
+            document.setMargins(0, 0, 0, 0);
             HtmlConverter.convertToPdf(htmlContent, fos);
             return generarLinkDescarga(BASE_URL, outputPath);
         } catch (IOException e) {
@@ -82,16 +91,15 @@ public class DocumentoServiceImpl implements DocumentoService {
             throw new IllegalArgumentException("El correo electrónico no puede estar vacío.");
         }
         recibirDatos();
-
+        String email2 = "sabeteta03@gmail.com";
         String pdfPath = crearArchivoTemporal("cartaAceptacion", ".pdf");
         String linkDescarga = generarPdf(datos, pdfPath);
 
         String htmlContent = generarContenidoCorreo(linkDescarga);
 
-        enviarCorreo(email, htmlContent);
+        enviarCorreo(email, email2,  htmlContent);
 
     }
-
 
 
     private String generarContenidoCorreo(String downloadUrl) {
@@ -100,7 +108,7 @@ public class DocumentoServiceImpl implements DocumentoService {
                 "<p><a href=\"" + downloadUrl + "\" style=\"" + BUTTON_STYLE + "\">Descargar Carta</a></p>";
     }
 
-    private void enviarCorreo(String email, String htmlContent) {
+    private void enviarCorreo(String email, String email2, String htmlContent) {
         try {
             MimeMessage mimeMessage = mailSender.createMimeMessage();
             MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, true);
@@ -108,6 +116,13 @@ public class DocumentoServiceImpl implements DocumentoService {
             helper.setTo(email);
             helper.setSubject("Carta de Aceptación");
             helper.setText(htmlContent, true);
+
+
+            helper.setTo(email2);
+            helper.setSubject("Carta de Aceptación para el Lider de Area");
+            helper.setText(htmlContent, true);
+
+
 
             mailSender.send(mimeMessage);
         } catch (MessagingException e) {

@@ -1,6 +1,6 @@
 package com.calma.DocManagerServer.controller;
 
-import com.calma.DocManagerServer.services.BuscarService;
+import com.calma.DocManagerServer.services.serviceImpl.BuscarService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -19,7 +19,7 @@ public class ExcelController {
 
     @GetMapping("/buscar")
     public Map<String, String> buscarRegistro(@RequestParam String dni) {
-        String excelPath = "C:/prueba/Libro1.xlsx";
+        String excelPath = "ruta/del/archivo/solicitantes.xlsx";
         try {
             Map<String, String> resultado = buscarService.buscarRegistro(excelPath, dni);
             if (resultado != null) {
