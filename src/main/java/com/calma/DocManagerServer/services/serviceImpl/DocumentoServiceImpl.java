@@ -1,6 +1,9 @@
 package com.calma.DocManagerServer.services.serviceImpl;
 
+import com.calma.DocManagerServer.model.PracticanteVoluntario;
+import com.calma.DocManagerServer.repository.PracticanteVoluntarioRepository;
 import com.calma.DocManagerServer.services.DocumentoService;
+import com.calma.DocManagerServer.services.PracticanteVoluntarioService;
 import com.itextpdf.html2pdf.HtmlConverter;
 import com.itextpdf.kernel.geom.PageSize;
 import com.itextpdf.kernel.pdf.PdfDocument;
@@ -9,6 +12,8 @@ import com.itextpdf.layout.Document;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.InputStreamResource;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
@@ -16,10 +21,12 @@ import org.thymeleaf.TemplateEngine;
 import org.thymeleaf.context.Context;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -49,6 +56,15 @@ public class DocumentoServiceImpl implements DocumentoService {
         }
     }
 
+    @Override
+    public InputStreamResource obtenerRecursoPdfTemporal(String pdfPath) throws IOException {
+        File file = new File(pdfPath);
+        if (!file.exists()) {
+            throw new IOException("El archivo no existe en la ruta especificada: " + pdfPath);
+        }
+        return new InputStreamResource(new FileInputStream(file));
+    }
+
     private String generarLinkDescarga(String baseUrl, String pdfPath) {
         return baseUrl + "?path=" + pdfPath;
     }
@@ -68,32 +84,55 @@ public class DocumentoServiceImpl implements DocumentoService {
         return templateEngine.process(templateName, context);
     }
     /*  Recibir data  */
-    public void recibirDatos(){
+    public Map<String, Object> recibirDatos(String id) {
+        // Obtener el Optional de PracticanteVoluntario
+        Optional<PracticanteVoluntario> optionalPracticante = service.findById(Long.valueOf(id));
 
-        datos.put("nombresApellidos",  "FUNDACIÓN CALMA");
-        datos.put("correoElectronico","20600792220");
-        datos.put("dni","Sebastian Adauco Beteta Espinoza");
-        datos.put("celular", "75253829");
-        datos.put("universidadOInstituto", "Automatización");
-        datos.put("codigoEstudiante", "Prácticas Pre Profesionales");
-        datos.put("carrera", "Ingeniería de Software");
-        datos.put("tipoPracticas", "03 de octubre de 2024");
-        datos.put("area", "03 de abril de 2025");
-        datos.put("liderArea", "Cindy Shirley Martinez Jimenez");
-        datos.put("puesto", "San Isidro, 10 de octubre de 2024");
-        datos.put("fechaIngreso",  "San Isidro, 10 de octubre de 2024");
-        datos.put("fechaSalida", "San Isidro, 10 de octubre de 2024");
+        // Verificar si el Optional contiene un valor
+        if (optionalPracticante.isPresent()) {
+            PracticanteVoluntario practicante = optionalPracticante.get();
+
+            // Crear el Map con los datos del PracticanteVoluntario
+            Map<String, Object> datos = new HashMap<>();
+            datos.put("nombresApellidos", practicante.getNombresApellidos());
+            datos.put("correoElectronico", practicante.getCorreoElectronico());
+            datos.put("dni", practicante.getDni());
+            datos.put("celular", practicante.getCelular());
+            datos.put("universidadOInstituto", practicante.getUniversidadOInstituto());
+            datos.put("codigoEstudiante", practicante.getCodigoEstudiante());
+            datos.put("carrera", practicante.getCarrera());
+            datos.put("tipoPracticas", practicante.getTipoPracticas());
+            datos.put("area", practicante.getArea());
+            datos.put("liderArea", practicante.getLiderArea());
+            datos.put("puesto", practicante.getPuesto());
+            datos.put("fechaIngreso", practicante.getFechaIngreso());
+            datos.put("fechaSalida", practicante.getFechaSalida());
+
+            return datos;
+        } else {
+            // Si el Optional está vacío, retornar un Map vacío o un mensaje de error
+            Map<String, Object> error = new HashMap<>();
+            error.put("error", "Practicante no encontrado");
+            return error;
+        }
     }
 
+
+
+
+    @Autowired
+    private PracticanteVoluntarioService service;
+
     @Override
-    public void enviarCarta(String email) {
+    public void enviarCarta(String email, String id) {
         if (email == null || email.isBlank()) {
             throw new IllegalArgumentException("El correo electrónico no puede estar vacío.");
         }
-        recibirDatos();
+
+        Map<String, Object> data = recibirDatos(id);
         String email2 = "sabeteta03@gmail.com";
         String pdfPath = crearArchivoTemporal("cartaAceptacion", ".pdf");
-        String linkDescarga = generarPdf(datos, pdfPath);
+        String linkDescarga = generarPdf(data, pdfPath);
 
         String htmlContent = generarContenidoCorreo(linkDescarga);
 
@@ -127,6 +166,74 @@ public class DocumentoServiceImpl implements DocumentoService {
             mailSender.send(mimeMessage);
         } catch (MessagingException e) {
             throw new RuntimeException("Error al enviar el correo", e);
+        }
+    }
+    @Autowired
+    private PracticanteVoluntarioRepository repository;
+    @Autowired
+    private BuscarService buscarService;
+
+
+    @Override
+    public PracticanteVoluntario save(PracticanteVoluntario practicante) {
+        StringBuilder diferencias = new StringBuilder();
+
+        try {
+            Map<String, String> resultado = buscarService.buscarRegistro("C:\\prueba\\Prueba1.xlsx", practicante.getCorreoElectronico());
+
+
+            if (!resultado.get("nombresApellidos").equals(practicante.getNombresApellidos())) {
+                diferencias.append("Nombres y Apellidos no coinciden. ");
+            }
+            if (!resultado.get("correoElectronico").equals(practicante.getCorreoElectronico())) {
+                diferencias.append("Correo electrónico no coincide. ");
+            }
+            if (!resultado.get("dni").equals(practicante.getDni())) {
+                diferencias.append("DNI no coincide. ");
+            }
+            if (!resultado.get("celular").equals(practicante.getCelular())) {
+                diferencias.append("Celular no coincide. ");
+            }
+            if (!resultado.get("universidadOInstituto").equals(practicante.getUniversidadOInstituto())) {
+                diferencias.append("Universidad o Instituto no coincide. ");
+            }
+            if (!resultado.get("codigoEstudiante").equals(practicante.getCodigoEstudiante())) {
+                diferencias.append("Código de estudiante no coincide. ");
+            }
+            if (!resultado.get("carrera").equals(practicante.getCarrera())) {
+                diferencias.append("Carrera no coincide. ");
+            }
+            if (!resultado.get("tipoPracticas").equals(practicante.getTipoPracticas())) {
+                diferencias.append("Tipo de prácticas no coincide. ");
+            }
+            if (!resultado.get("area").equals(practicante.getArea())) {
+                diferencias.append("Área no coincide. ");
+            }
+            if (!resultado.get("liderArea").equals(practicante.getLiderArea())) {
+                diferencias.append("Líder de área no coincide. ");
+            }
+            if (!resultado.get("puesto").equals(practicante.getPuesto())) {
+                diferencias.append("Puesto no coincide. ");
+            }
+            if (!resultado.get("fechaIngreso").equals(practicante.getFechaIngreso())) {
+                diferencias.append("Fecha de ingreso no coincide. ");
+            }
+            if (!resultado.get("fechaSalida").equals(practicante.getFechaSalida())) {
+                diferencias.append("Fecha de salida no coincide. ");
+            }
+
+            // Si existen diferencias, lanzamos una excepción con los detalles
+            if (diferencias.length() > 0) {
+                throw new RuntimeException("Las siguientes diferencias fueron encontradas: " + diferencias.toString());
+            }
+            PracticanteVoluntario savedPracticante = repository.save(practicante);
+
+            enviarCarta(practicante.getCorreoElectronico(), String.valueOf(savedPracticante.getIdPracticanteVoluntario()));
+
+            return savedPracticante;
+
+        } catch (IOException e) {
+            throw new RuntimeException(e);
         }
     }
 }

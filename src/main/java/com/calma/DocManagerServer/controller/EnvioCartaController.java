@@ -1,6 +1,7 @@
 package com.calma.DocManagerServer.controller;
 
 import com.calma.DocManagerServer.dto.request.EmailRequest;
+import com.calma.DocManagerServer.model.PracticanteVoluntario;
 import com.calma.DocManagerServer.services.ExcelService;
 import com.calma.DocManagerServer.services.DocumentoService;
 import jakarta.mail.MessagingException;
@@ -36,25 +37,28 @@ public class EnvioCartaController {
     *
     * */
     @GetMapping("/downloadPdf")
-    public ResponseEntity<InputStreamResource> downloadPdf(@RequestParam("path") String pdfPath) throws IOException {
-        File file = new File(pdfPath);
-        if (!file.exists()) {
-            throw new IOException("El archivo no existe en la ruta especificada: " + pdfPath);
+    public ResponseEntity<InputStreamResource> downloadPdf(@RequestParam("path") String pdfPath) {
+        try {
+            InputStreamResource resource = documentoService.obtenerRecursoPdfTemporal(pdfPath);
+
+            File file = new File(pdfPath);
+            return ResponseEntity.ok()
+                    .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=" + file.getName())
+                    .contentType(MediaType.APPLICATION_PDF)
+                    .contentLength(file.length())
+                    .body(resource);
+        } catch (IOException e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .header(HttpHeaders.CONTENT_TYPE, MediaType.TEXT_PLAIN_VALUE)
+                    .body(null);
         }
-        InputStreamResource resource = new InputStreamResource(new FileInputStream(file));
-        return ResponseEntity.ok()
-                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=" + file.getName())
-                .contentType(MediaType.APPLICATION_PDF)
-                .contentLength(file.length())
-                .body(resource);
     }
 
-    @PostMapping("/enviarEmail")
-    public ResponseEntity<String> enviarEmail(@RequestBody EmailRequest emailRequest) throws MessagingException, IOException {
-        documentoService.enviarCarta(emailRequest.getEmail());
-        return ResponseEntity.status(HttpStatus.CREATED)
-                .body("Correo enviado correctamente a " + emailRequest.getEmail());
+    @PostMapping("/enviarCarta")
+    public PracticanteVoluntario create(@RequestBody PracticanteVoluntario practicante) {
+        return documentoService.save(practicante);
     }
+
 
 
 }

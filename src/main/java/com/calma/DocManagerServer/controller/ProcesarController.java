@@ -16,7 +16,7 @@ import java.util.List;
 public class ProcesarController {
     private final ProcesarService procesarService;
 
-    @Value("${ruta.archivo.excel}")
+    @Value("${C:\\Prueba\\Prueba1.xlsxl}")
     private String rutaExcel;
 
     public ProcesarController(ProcesarService procesarService) {

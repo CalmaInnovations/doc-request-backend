@@ -2,6 +2,7 @@ package com.calma.DocManagerServer.services.serviceImpl;
 
 
 import com.calma.DocManagerServer.dto.DatosDTO;
+import com.calma.DocManagerServer.services.ILectorExcel;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.stereotype.Service;
@@ -9,11 +10,13 @@ import org.springframework.stereotype.Service;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
 @Service
-public class LectorExcel {
+public class LectorExcel implements ILectorExcel {
+    @Override
     public List<DatosDTO> leerExcel(String filePath) {
         List<DatosDTO> datosList = new ArrayList<>();
 
@@ -25,30 +28,56 @@ public class LectorExcel {
             for (int i = 1; i <= sheet.getLastRowNum(); i++) {
                 Row row = sheet.getRow(i);
 
-                DatosDTO datosDTO = new DatosDTO();
+                if (row == null) continue;
 
-                datosDTO.setNombresApellidos(row.getCell(0).getStringCellValue());
-                datosDTO.setCorreoElectronico(row.getCell(1).getStringCellValue());
-                datosDTO.setDni(row.getCell(2).getStringCellValue());
-                datosDTO.setCelular(row.getCell(3).getStringCellValue());
-                datosDTO.setUniversidadOInstituto(row.getCell(4).getStringCellValue());
-                datosDTO.setCodigoEstudiante(row.getCell(5).getStringCellValue());
-                datosDTO.setCarrera(row.getCell(6).getStringCellValue());
-                datosDTO.setTipoPracticas(row.getCell(7).getStringCellValue());
-                datosDTO.setArea(row.getCell(8).getStringCellValue());
-                datosDTO.setLiderArea(row.getCell(9).getStringCellValue());
-                datosDTO.setPuesto(row.getCell(10).getStringCellValue());
-                datosDTO.setFechaIngreso(row.getCell(11).getLocalDateTimeCellValue().toLocalDate());
-                datosDTO.setFechaSalida(row.getCell(12).getLocalDateTimeCellValue().toLocalDate());
+                try {
+                    DatosDTO datosDTO = new DatosDTO();
 
-                datosList.add(datosDTO);
+                    datosDTO.setNombresApellidos(getCellValueAsString(row.getCell(0), "Nombres y Apellidos"));
+                    datosDTO.setCorreoElectronico(getCellValueAsString(row.getCell(1), "Correo Electrónico"));
+                    datosDTO.setDni(getCellValueAsString(row.getCell(2), "DNI"));
+                    datosDTO.setCelular(getCellValueAsString(row.getCell(3), "Celular"));
+                    datosDTO.setUniversidadOInstituto(getCellValueAsString(row.getCell(4), "Universidad o Instituto"));
+                    datosDTO.setCodigoEstudiante(getCellValueAsString(row.getCell(5), "Código de Estudiante"));
+                    datosDTO.setCarrera(getCellValueAsString(row.getCell(6), "Carrera"));
+                    datosDTO.setTipoPracticas(getCellValueAsString(row.getCell(7), "Tipo de Prácticas"));
+                    datosDTO.setArea(getCellValueAsString(row.getCell(8), "Área"));
+                    datosDTO.setLiderArea(getCellValueAsString(row.getCell(9), "Líder de Área"));
+                    datosDTO.setPuesto(getCellValueAsString(row.getCell(10), "Puesto"));
+                    datosDTO.setFechaIngreso(getCellValueAsDate(row.getCell(11), "Fecha de Ingreso"));
+                    datosDTO.setFechaSalida(getCellValueAsDate(row.getCell(12), "Fecha de Salida"));
+
+                    datosList.add(datosDTO);
+                } catch (IllegalArgumentException e) {
+                    throw new RuntimeException("Error en la fila " + (i + 1) + ": " + e.getMessage());
+                }
             }
 
         } catch (IOException e) {
             e.printStackTrace();
-            System.out.println("Error al leer el archivo Excel: " + e.getMessage());
+            throw new RuntimeException("Error al leer el archivo Excel: " + e.getMessage());
         }
 
         return datosList;
+    }
+
+    private String getCellValueAsString(Cell cell, String fieldName) {
+        if (cell == null || cell.getCellType() == CellType.BLANK) {
+            throw new IllegalArgumentException(fieldName + " esta vacío");
+        }
+        if (cell.getCellType() == CellType.STRING) {
+            return cell.getStringCellValue().trim();
+        } else if (cell.getCellType() == CellType.NUMERIC) {
+            return String.valueOf((long) cell.getNumericCellValue());
+        } else {
+            throw new IllegalArgumentException(fieldName + " este tipo de dato no es valido");
+        }
+    }
+
+    private LocalDate getCellValueAsDate(Cell cell, String fieldName) {
+        if (cell == null || cell.getCellType() != CellType.NUMERIC || !DateUtil.isCellDateFormatted(cell)) {
+            throw new IllegalArgumentException(fieldName + " la fecha no es valida");
+        }
+        return cell.getLocalDateTimeCellValue().toLocalDate();
     }
 }

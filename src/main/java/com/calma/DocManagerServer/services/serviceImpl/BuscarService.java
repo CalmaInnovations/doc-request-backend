@@ -1,5 +1,5 @@
 package com.calma.DocManagerServer.services.serviceImpl;
-
+import com.calma.DocManagerServer.services.IBuscarService;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.stereotype.Service;
@@ -10,10 +10,10 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
-
 @Service
-public class BuscarService {
-    public Map<String, String> buscarRegistro(String excelPath, String dniCriterio) throws IOException {
+public class BuscarService implements IBuscarService {
+    @Override
+    public Map<String, String> buscarRegistro(String excelPath, String correoCriterio) throws IOException {
         FileInputStream fileInputStream = new FileInputStream(new File(excelPath));
         Workbook workbook = new XSSFWorkbook(fileInputStream);
         Sheet sheet = workbook.getSheetAt(0);
@@ -25,9 +25,9 @@ public class BuscarService {
         };
 
         for (Row row : sheet) {
-            Cell dniCell = row.getCell(2);
-            if (dniCell != null && dniCell.getCellType() == CellType.STRING) {
-                if (dniCell.getStringCellValue().equals(dniCriterio)) {
+            Cell correoCell = row.getCell(1);
+            if (correoCell != null && correoCell.getCellType() == CellType.STRING) {
+                if (correoCell.getStringCellValue().equalsIgnoreCase(correoCriterio)) {
                     Map<String, String> registro = new HashMap<>();
                     for (int i = 0; i < columnas.length; i++) {
                         Cell cell = row.getCell(i);
