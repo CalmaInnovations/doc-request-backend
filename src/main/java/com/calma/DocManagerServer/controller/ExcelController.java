@@ -19,7 +19,7 @@ public class ExcelController {
 
     private final BuscarService buscarService;
     private final LectorExcel lectorExcel;
-
+    private static final String UPLOAD_DIR = "src/main/resources/files/Prueba1.xlsx";
     @Autowired
     public ExcelController(BuscarService buscarService, LectorExcel lectorExcel) {
         this.buscarService = buscarService;
@@ -28,7 +28,7 @@ public class ExcelController {
 
     @GetMapping("/buscar")
     public Map<String, String> buscarRegistro(@RequestParam String correo) {
-        String excelPath = "C:\\Prueba1.xlsx";
+        String excelPath = UPLOAD_DIR;
         try {
             Map<String, String> resultado = buscarService.buscarRegistro(excelPath, correo);
             if (resultado != null) {

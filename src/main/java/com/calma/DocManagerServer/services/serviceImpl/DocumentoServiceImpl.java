@@ -1,5 +1,6 @@
 package com.calma.DocManagerServer.services.serviceImpl;
 
+import com.calma.DocManagerServer.exception.DatosNoCoincidenException;
 import com.calma.DocManagerServer.model.NumeroOficio;
 import com.calma.DocManagerServer.model.PracticanteVoluntario;
 import com.calma.DocManagerServer.repository.NumeroOficioRepository;
@@ -16,6 +17,7 @@ import jakarta.mail.internet.MimeMessage;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.InputStreamResource;
+import org.springframework.http.ResponseEntity;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
@@ -28,9 +30,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 
 @Service
 @RequiredArgsConstructor
@@ -40,10 +40,10 @@ public class DocumentoServiceImpl implements DocumentoService {
 
     private final TemplateEngine templateEngine;
     private final JavaMailSender mailSender;
-    private static final Map<String, Object> datos = new HashMap<>();
+    private static final String UPLOAD_DIR = "src/main/resources/files/Prueba1.xlsx";
 
     private static final String BASE_URL = "http://localhost:8080/api/downloadPdf";
-    private static final String BUTTON_STYLE = "background-color: #4CAF50; color: white; padding: 10px 20px; text-align: center; text-decoration: none; display: inline-block; border-radius: 4px;";
+    private static final String BUTTON_STYLE = "background-color: #00BFFF; color: white; padding: 10px 20px; text-align: center; text-decoration: none; display: inline-block; border-radius: 4px; border: none;";
 
     @Override
     public String generarPdf(Map<String, Object> datos, String templateName, String outputPath) {
@@ -166,21 +166,42 @@ public class DocumentoServiceImpl implements DocumentoService {
         String linkDescargaCarta = generarPdf(data, "templateCartaAceptacion", pdfPathCarta);
         String linkDescargaConstancia = generarPdf(data, "templateConstanciaAceptacion", pdfPathConstancia);
 
-        String htmlContent = generarContenidoCorreo(linkDescargaCarta, linkDescargaConstancia);
-
+        String htmlContent = generarContenidoCorreo((String) data.get("nombresApellidos"),linkDescargaCarta, linkDescargaConstancia, (String) data.get("area"));
+        String htmlContentLider = generarContenidoCorreoJefe((String) data.get("liderArea"), (String) data.get("nombresApellidos"), linkDescargaCarta, linkDescargaConstancia, (String) data.get("area"));
         // Enviar al practicante
         enviarCorreo(email, htmlContent, "Documentos de Aceptación");
 
         // Enviar al líder de área
-        enviarCorreo(emailLiderArea, htmlContent, "Documentos de Aceptación para el Líder de Área");
+        enviarCorreo(emailLiderArea, htmlContentLider, "Documentos de Aceptación para el Líder de Área");
     }
 
-    private String generarContenidoCorreo(String linkCarta, String linkConstancia) {
+    private String generarContenidoCorreo(String nombrePasante, String linkCarta, String linkConstancia, String area) {
         return "<h1>Documentos de Aceptación</h1>" +
-                "<p>Estimado/a, adjunto encontrará los documentos de aceptación.</p>" +
+                "<p>Buenas tardes estimado(a) " + nombrePasante + ",</p>" +
+                "<p>Adjunto encontrará el documento firmado, entregado para los fines correspondientes. Agradecemos de antemano que confirme la recepción del mismo a través de este medio.</p>" +
+                "<p>En caso de que tenga alguna inquietud o requiera realizar alguna corrección, por favor no dude en ponerse en contacto con el área en un plazo de 2 días. Luego de la emisión del documento, si no recibimos tu confirmación, consideraremos que el documento fue entregado correctamente. De esta manera, no estaremos ligados a futuros reclamos relacionados con la entrega del certificado.</p>" +
+                "<p>Quedamos atentos a su respuesta.</p>" +
                 "<p><a href='" + linkCarta + "' style='" + BUTTON_STYLE + "'>Descargar Carta de Aceptación</a></p>" +
-                "<p><a href='" + linkConstancia + "' style='" + BUTTON_STYLE + "'>Descargar Constancia de Aceptación</a></p>";
+                "<p><a href='" + linkConstancia + "' style='" + BUTTON_STYLE + "'>Descargar Constancia de Aceptación</a></p>" +
+                "<p>Muchas gracias por su atención,</p>" +
+                "<p>Saludos cordiales,</p>" +
+                "<p>"+ area + "</p>";
     }
+
+    private String generarContenidoCorreoJefe(String nombreJefe, String nombrePasante, String linkCarta, String linkConstancia, String area) {
+        return "<h1>Documentos de Aceptación - Prueba Experimental</h1>" +
+                "<p>Estimado/a " + nombreJefe + ",</p>" +
+                "<p>Le informamos que el documento firmado para el pasante " + nombrePasante + " ha sido generado como parte de una prueba experimental en el proceso de aceptación de documentos.</p>" +
+                "<p>Adjunto encontrará los enlaces para descargar la Carta de Aceptación y la Constancia de Aceptación del pasante. Esta prueba tiene como objetivo verificar la correcta generación y entrega de estos documentos.</p>" +
+                "<p>Es importante señalar que, si bien este proceso está siendo implementado, se trata de una prueba experimental y cualquier comentario o recomendación para mejorar el procedimiento será bien recibido.</p>" +
+                "<p>En caso de que se requiera realizar alguna corrección o ajuste en los documentos, no dude en contactarnos a la mayor brevedad posible.</p>" +
+                "<p><a href='" + linkCarta + "' style='" + BUTTON_STYLE + "'>Descargar Carta de Aceptación</a></p>" +
+                "<p><a href='" + linkConstancia + "' style='" + BUTTON_STYLE + "'>Descargar Constancia de Aceptación</a></p>" +
+                "<p>Agradecemos su atención y quedamos atentos a cualquier comentario que pueda tener.</p>" +
+                "<p>Saludos cordiales,</p>" +
+                "<p>'"+ area+"' </p>";
+    }
+
 
     private void enviarCorreo(String email, String htmlContent, String subject) {
         try {
@@ -203,63 +224,88 @@ public class DocumentoServiceImpl implements DocumentoService {
     @Autowired
     private BuscarService buscarService;
 
-
+    boolean compararDatos(String resultadoData, String datoPracticate) {
+        return resultadoData.trim().toUpperCase().equals(datoPracticate.trim().toUpperCase());
+    }
     @Override
     public PracticanteVoluntario save(PracticanteVoluntario practicante) {
         StringBuilder diferencias = new StringBuilder();
+        List<String> errores = new ArrayList<>();
 
         try {
-            Map<String, String> resultado = buscarService.buscarRegistro("C:\\prueba\\Prueba1.xlsx", practicante.getCorreoElectronico());
+            Map<String, String> resultado = buscarService.buscarRegistro(UPLOAD_DIR , practicante.getCorreoElectronico());
+
+            // Función auxiliar para comparar las cadenas
 
 
-            if (!resultado.get("nombresApellidos").equals(practicante.getNombresApellidos())) {
-                diferencias.append("Nombres y Apellidos no coinciden. ");
+            // Comparar cada campo y agregar errores si hay diferencias
+            if (!compararDatos(resultado.get("nombresApellidos"), practicante.getNombresApellidos())) {
+                errores.add("Nombres y Apellidos no coinciden.");
             }
-            if (!resultado.get("correoElectronico").equals(practicante.getCorreoElectronico())) {
-                diferencias.append("Correo electrónico no coincide. ");
+            if (!compararDatos(resultado.get("correoElectronico"), practicante.getCorreoElectronico())) {
+                errores.add("Correo electrónico no coincide.");
             }
-            if (!resultado.get("dni").equals(practicante.getDni())) {
-                diferencias.append("DNI no coincide. ");
+            if (!compararDatos(resultado.get("dni"), practicante.getDni())) {
+                errores.add("DNI no coincide.");
             }
-            if (!resultado.get("celular").equals(practicante.getCelular())) {
-                diferencias.append("Celular no coincide. ");
+            if (!compararDatos(resultado.get("celular"), practicante.getCelular())) {
+                errores.add("Celular no coincide.");
             }
-            if (!resultado.get("universidadOInstituto").equals(practicante.getUniversidadOInstituto())) {
-                diferencias.append("Universidad o Instituto no coincide. ");
+            if (!compararDatos(resultado.get("universidadOInstituto"), practicante.getUniversidadOInstituto())) {
+                errores.add("Universidad o Instituto no coincide.");
             }
-            if (!resultado.get("codigoEstudiante").equals(practicante.getCodigoEstudiante())) {
-                diferencias.append("Código de estudiante no coincide. ");
+            if (!compararDatos(resultado.get("codigoEstudiante"), practicante.getCodigoEstudiante())) {
+                errores.add("Código de estudiante no coincide.");
             }
-            if (!resultado.get("carrera").equals(practicante.getCarrera())) {
-                diferencias.append("Carrera no coincide. ");
+            if (!compararDatos(resultado.get("carrera"), practicante.getCarrera())) {
+                errores.add("Carrera no coincide.");
             }
-            if (!resultado.get("tipoPracticas").equals(practicante.getTipoPracticas())) {
-                diferencias.append("Tipo de prácticas no coincide. ");
+            if (!compararDatos(resultado.get("tipoPracticas"), practicante.getTipoPracticas())) {
+                errores.add("Tipo de prácticas no coincide.");
             }
-            if (!resultado.get("area").equals(practicante.getArea())) {
-                diferencias.append("Área no coincide. ");
+            if (!compararDatos(resultado.get("area"), practicante.getArea())) {
+                errores.add("Área no coincide.");
             }
-            if (!resultado.get("liderArea").equals(practicante.getLiderArea())) {
-                diferencias.append("Líder de área no coincide. ");
+            if (!compararDatos(resultado.get("liderArea"), practicante.getLiderArea())) {
+                errores.add("Líder de área no coincide.");
             }
-            if (!resultado.get("puesto").equals(practicante.getPuesto())) {
-                diferencias.append("Puesto no coincide. ");
+            if (!compararDatos(resultado.get("puesto"), practicante.getPuesto())) {
+                errores.add("Puesto no coincide.");
             }
-            if (!resultado.get("fechaIngreso").equals(practicante.getFechaIngreso())) {
-                diferencias.append("Fecha de ingreso no coincide. ");
+            if (!compararDatos(resultado.get("fechaIngreso"), practicante.getFechaIngreso())) {
+                errores.add("Fecha de ingreso no coincide.");
             }
-            if (!resultado.get("fechaSalida").equals(practicante.getFechaSalida())) {
-                diferencias.append("Fecha de salida no coincide. ");
+            if (!compararDatos(resultado.get("fechaSalida"), practicante.getFechaSalida())) {
+                errores.add("Fecha de salida no coincide.");
             }
 
-            // Si existen diferencias, lanzamos una excepción con los detalles
-            if (diferencias.length() > 0) {
-                throw new RuntimeException("Las siguientes diferencias fueron encontradas: " + diferencias.toString());
+            // Si existen diferencias, devolvemos las respuestas con los errores
+            if (!errores.isEmpty()) {
+                throw new DatosNoCoincidenException(errores);
             }
-            PracticanteVoluntario savedPracticante = repository.save(practicante);
 
-            enviarCarta(savedPracticante.getCorreoElectronico(), String.valueOf(savedPracticante.getIdPracticanteVoluntario()));
+            PracticanteVoluntario practicanteVoluntario = new PracticanteVoluntario();
 
+            practicanteVoluntario.setNombresApellidos(resultado.get("nombresApellidos"));
+            practicanteVoluntario.setCorreoElectronico(resultado.get("correoElectronico"));
+            practicanteVoluntario.setDni(resultado.get("dni"));
+            practicanteVoluntario.setCelular(resultado.get("celular"));
+            practicanteVoluntario.setUniversidadOInstituto(resultado.get("universidadOInstituto"));
+            practicanteVoluntario.setCodigoEstudiante(resultado.get("codigoEstudiante"));
+            practicanteVoluntario.setCarrera(resultado.get("carrera"));
+            practicanteVoluntario.setTipoPracticas(resultado.get("tipoPracticas"));
+            practicanteVoluntario.setArea(resultado.get("area"));
+            practicanteVoluntario.setLiderArea(resultado.get("liderArea"));
+            practicanteVoluntario.setPuesto(resultado.get("puesto"));
+            practicanteVoluntario.setFechaIngreso(resultado.get("fechaIngreso"));
+            practicanteVoluntario.setFechaSalida(resultado.get("fechaSalida"));
+
+
+            // Si no hay errores, guardamos el practicante y enviamos la carta
+            PracticanteVoluntario savedPracticante = repository.save(practicanteVoluntario);
+            enviarCarta(practicanteVoluntario.getCorreoElectronico(), String.valueOf(practicanteVoluntario.getIdPracticanteVoluntario()));
+
+            // Retornamos el objeto guardado
             return savedPracticante;
 
         } catch (IOException e) {

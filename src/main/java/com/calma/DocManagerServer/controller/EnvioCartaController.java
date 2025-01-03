@@ -1,6 +1,7 @@
 package com.calma.DocManagerServer.controller;
 
 import com.calma.DocManagerServer.dto.request.EmailRequest;
+import com.calma.DocManagerServer.exception.DatosNoCoincidenException;
 import com.calma.DocManagerServer.model.PracticanteVoluntario;
 import com.calma.DocManagerServer.services.ExcelService;
 import com.calma.DocManagerServer.services.DocumentoService;
@@ -56,8 +57,17 @@ public class EnvioCartaController {
     }
 
     @PostMapping("/enviarCarta")
-    public PracticanteVoluntario create(@RequestBody PracticanteVoluntario practicante) {
-        return documentoService.save(practicante);
+    public ResponseEntity<?> create(@RequestBody PracticanteVoluntario practicante) {
+        try {
+            PracticanteVoluntario savedPracticante = (PracticanteVoluntario) documentoService.save(practicante);
+            return ResponseEntity.status(HttpStatus.CREATED).body(savedPracticante);
+        } catch (DatosNoCoincidenException ex) {
+            return ResponseEntity.badRequest().body(ex.getErrores());
+        } catch (Exception ex) {
+            // Manejo de cualquier otra excepción general
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Ocurrió un error inesperado: " + ex.getMessage());
+        }
     }
 
 

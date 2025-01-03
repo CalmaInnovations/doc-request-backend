@@ -18,6 +18,6 @@ public interface DocumentoService {
 
     public InputStreamResource obtenerRecursoPdfTemporal(String pdfPath) throws IOException;
 
-    PracticanteVoluntario save(PracticanteVoluntario practicante);
+    Object save(PracticanteVoluntario practicante);
 }
 
