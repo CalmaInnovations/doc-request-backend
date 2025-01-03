@@ -13,7 +13,7 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/api/excel")
-@CrossOrigin(origins = "http://localhost:5173")
+@CrossOrigin(origins = "https://docmanager-client.onrender.com/")
 
 public class ExcelController {
 

@@ -23,7 +23,7 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/")
 @RequiredArgsConstructor
-@CrossOrigin(origins = "http://localhost:5173")
+@CrossOrigin(origins = "https://docmanager-client.onrender.com/")
 
 public class EnvioCartaController {
 

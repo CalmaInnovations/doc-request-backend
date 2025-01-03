@@ -14,7 +14,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/procesar")
-@CrossOrigin(origins = "http://localhost:5173")
+@CrossOrigin(origins = "https://docmanager-client.onrender.com/")
 
 public class ProcesarController {
     private final ProcesarService procesarService;

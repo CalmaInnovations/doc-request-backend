@@ -12,7 +12,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/solicitud")
-@CrossOrigin(origins = "http://localhost:5173")
+@CrossOrigin(origins = "https://docmanager-client.onrender.com/")
 
 public class SolicitudController {
 
