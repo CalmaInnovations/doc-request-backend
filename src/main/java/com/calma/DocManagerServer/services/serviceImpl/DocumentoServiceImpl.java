@@ -36,14 +36,13 @@ public class DocumentoServiceImpl implements DocumentoService {
     private final JavaMailSender mailSender;
     private static final Map<String, Object> datos = new HashMap<>();
 
-
     private static final String BASE_URL = "http://localhost:8080/api/downloadPdf";
     private static final String BUTTON_STYLE = "background-color: #4CAF50; color: white; padding: 10px 20px; text-align: center; text-decoration: none; display: inline-block; border-radius: 4px;";
 
     @Override
-    public String generarPdf(Map<String, Object> datos, String outputPath) {
+    public String generarPdf(Map<String, Object> datos, String templateName, String outputPath) {
         try (FileOutputStream fos = new FileOutputStream(outputPath)) {
-            String htmlContent = processThymeleafTemplate("templateCartaAceptacion", datos);
+            String htmlContent = processThymeleafTemplate(templateName, datos);
             PdfWriter writer = new PdfWriter(fos);
             PdfDocument pdfDoc = new PdfDocument(writer);
             pdfDoc.setDefaultPageSize(PageSize.A4);
@@ -83,16 +82,13 @@ public class DocumentoServiceImpl implements DocumentoService {
         context.setVariables(params);
         return templateEngine.process(templateName, context);
     }
-    /*  Recibir data  */
+
     public Map<String, Object> recibirDatos(String id) {
-        // Obtener el Optional de PracticanteVoluntario
         Optional<PracticanteVoluntario> optionalPracticante = service.findById(Long.valueOf(id));
 
-        // Verificar si el Optional contiene un valor
         if (optionalPracticante.isPresent()) {
             PracticanteVoluntario practicante = optionalPracticante.get();
 
-            // Crear el Map con los datos del PracticanteVoluntario
             Map<String, Object> datos = new HashMap<>();
             datos.put("nombresApellidos", practicante.getNombresApellidos());
             datos.put("correoElectronico", practicante.getCorreoElectronico());
@@ -110,15 +106,11 @@ public class DocumentoServiceImpl implements DocumentoService {
 
             return datos;
         } else {
-            // Si el Optional está vacío, retornar un Map vacío o un mensaje de error
             Map<String, Object> error = new HashMap<>();
             error.put("error", "Practicante no encontrado");
             return error;
         }
     }
-
-
-
 
     @Autowired
     private PracticanteVoluntarioService service;
@@ -130,46 +122,49 @@ public class DocumentoServiceImpl implements DocumentoService {
         }
 
         Map<String, Object> data = recibirDatos(id);
-        String email2 = "sabeteta03@gmail.com";
-        String pdfPath = crearArchivoTemporal("cartaAceptacion", ".pdf");
-        String linkDescarga = generarPdf(data, pdfPath);
+        String emailLiderArea = "sabeteta03@gmail.com";
 
-        String htmlContent = generarContenidoCorreo(linkDescarga);
+        // Generar ambos PDFs
+        String pdfPathCarta = crearArchivoTemporal("cartaAceptacion", ".pdf");
+        String pdfPathConstancia = crearArchivoTemporal("constanciaAceptacion", ".pdf");
 
-        enviarCorreo(email, email2,  htmlContent);
+        String linkDescargaCarta = generarPdf(data, "templateCartaAceptacion", pdfPathCarta);
+        String linkDescargaConstancia = generarPdf(data, "templateConstanciaAceptacion", pdfPathConstancia);
 
+        String htmlContent = generarContenidoCorreo(linkDescargaCarta, linkDescargaConstancia);
+
+        // Enviar al practicante
+        enviarCorreo(email, htmlContent, "Documentos de Aceptación");
+
+        // Enviar al líder de área
+        enviarCorreo(emailLiderArea, htmlContent, "Documentos de Aceptación para el Líder de Área");
     }
 
-
-    private String generarContenidoCorreo(String downloadUrl) {
-        return "<h1>Carta de Aceptación</h1>" +
-                "<p>Estimado/a, adjunto encontrará su carta de aceptación.</p>" +
-                "<p><a href=\"" + downloadUrl + "\" style=\"" + BUTTON_STYLE + "\">Descargar Carta</a></p>";
+    private String generarContenidoCorreo(String linkCarta, String linkConstancia) {
+        return "<h1>Documentos de Aceptación</h1>" +
+                "<p>Estimado/a, adjunto encontrará los documentos de aceptación.</p>" +
+                "<p><a href='" + linkCarta + "' style='" + BUTTON_STYLE + "'>Descargar Carta de Aceptación</a></p>" +
+                "<p><a href='" + linkConstancia + "' style='" + BUTTON_STYLE + "'>Descargar Constancia de Aceptación</a></p>";
     }
 
-    private void enviarCorreo(String email, String email2, String htmlContent) {
+    private void enviarCorreo(String email, String htmlContent, String subject) {
         try {
             MimeMessage mimeMessage = mailSender.createMimeMessage();
             MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, true);
 
             helper.setTo(email);
-            helper.setSubject("Carta de Aceptación");
+            helper.setSubject(subject);
             helper.setText(htmlContent, true);
-
-
-            helper.setTo(email2);
-            helper.setSubject("Carta de Aceptación para el Lider de Area");
-            helper.setText(htmlContent, true);
-
-
 
             mailSender.send(mimeMessage);
         } catch (MessagingException e) {
             throw new RuntimeException("Error al enviar el correo", e);
         }
     }
+
     @Autowired
     private PracticanteVoluntarioRepository repository;
+
     @Autowired
     private BuscarService buscarService;
 
@@ -228,7 +223,7 @@ public class DocumentoServiceImpl implements DocumentoService {
             }
             PracticanteVoluntario savedPracticante = repository.save(practicante);
 
-            enviarCarta(practicante.getCorreoElectronico(), String.valueOf(savedPracticante.getIdPracticanteVoluntario()));
+            enviarCarta(savedPracticante.getCorreoElectronico(), String.valueOf(savedPracticante.getIdPracticanteVoluntario()));
 
             return savedPracticante;
 
