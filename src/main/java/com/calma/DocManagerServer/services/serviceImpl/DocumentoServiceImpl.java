@@ -42,7 +42,7 @@ public class DocumentoServiceImpl implements DocumentoService {
     private final JavaMailSender mailSender;
     private static final String UPLOAD_DIR = "src/main/resources/files/Prueba1.xlsx";
 
-    private static final String BASE_URL = "http://localhost:8080/api/downloadPdf";
+    private static final String BASE_URL = "https://improved-xylophone-pjrw9vj7j74q3vjw-8080.app.github.dev/api/downloadPdf";
     private static final String BUTTON_STYLE = "background-color: #00BFFF; color: white; padding: 10px 20px; text-align: center; text-decoration: none; display: inline-block; border-radius: 4px; border: none;";
 
     @Override
