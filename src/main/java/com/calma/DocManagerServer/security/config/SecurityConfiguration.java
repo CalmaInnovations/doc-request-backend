@@ -11,9 +11,9 @@ public class SecurityConfiguration
 {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-        http
-                .securityMatcher((matchers) -> Boolean.parseBoolean(matchers.getRequestId())) // Aplica a todas las solicitudes
+        http.securityMatcher((matchers) -> Boolean.parseBoolean(matchers.getRequestId())) // Aplica a todas las solicitudes
                 .authorizeHttpRequests((requests) -> requests.anyRequest().permitAll()) // Permitir todo sin autenticación
+
                 .csrf((csrf) -> csrf.disable()) // Desactivar CSRF si no es necesario
                 .httpBasic(Customizer.withDefaults()); // Configuración adicional opcional
         return http.build();

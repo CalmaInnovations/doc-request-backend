@@ -22,6 +22,7 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/")
 @RequiredArgsConstructor
+@CrossOrigin(origins = "http://localhost:5173")
 
 public class EnvioCartaController {
 

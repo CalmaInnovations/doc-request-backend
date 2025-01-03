@@ -1,6 +1,8 @@
 package com.calma.DocManagerServer.services.serviceImpl;
 
+import com.calma.DocManagerServer.model.NumeroOficio;
 import com.calma.DocManagerServer.model.PracticanteVoluntario;
+import com.calma.DocManagerServer.repository.NumeroOficioRepository;
 import com.calma.DocManagerServer.repository.PracticanteVoluntarioRepository;
 import com.calma.DocManagerServer.services.DocumentoService;
 import com.calma.DocManagerServer.services.PracticanteVoluntarioService;
@@ -24,6 +26,8 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -31,6 +35,8 @@ import java.util.Optional;
 @Service
 @RequiredArgsConstructor
 public class DocumentoServiceImpl implements DocumentoService {
+    @Autowired
+    private NumeroOficioRepository numeroOficioRepository;
 
     private final TemplateEngine templateEngine;
     private final JavaMailSender mailSender;
@@ -83,8 +89,36 @@ public class DocumentoServiceImpl implements DocumentoService {
         return templateEngine.process(templateName, context);
     }
 
+
+    private String generarNumeroOficio() {
+
+        int numeroSecuencial = obtenerSiguienteNumeroSecuencial();
+        return String.format("%03d", numeroSecuencial);
+    }
+
+    private int obtenerSiguienteNumeroSecuencial() {
+        synchronized (this) {
+            Optional<NumeroOficio> optionalNumeroOficio = numeroOficioRepository.findById(1L);
+
+            NumeroOficio numeroOficio;
+            if (optionalNumeroOficio.isEmpty()) {
+                numeroOficio = new NumeroOficio();
+                numeroOficio.setNumeroOficio(1);
+            } else {
+                numeroOficio = optionalNumeroOficio.get();
+                numeroOficio.setNumeroOficio(numeroOficio.getNumeroOficio()+ + 1);
+            }
+
+            numeroOficio = numeroOficioRepository.save(numeroOficio);
+
+            return numeroOficio.getNumeroOficio();
+        }
+    }
+
     public Map<String, Object> recibirDatos(String id) {
         Optional<PracticanteVoluntario> optionalPracticante = service.findById(Long.valueOf(id));
+        LocalDate now = LocalDate.now();
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd MMMM yyyy");
 
         if (optionalPracticante.isPresent()) {
             PracticanteVoluntario practicante = optionalPracticante.get();
@@ -123,7 +157,8 @@ public class DocumentoServiceImpl implements DocumentoService {
 
         Map<String, Object> data = recibirDatos(id);
         String emailLiderArea = "sabeteta03@gmail.com";
-
+        data.put("fechaDocumento", LocalDate.now().format(DateTimeFormatter.ofPattern("dd MMMM yyyy")));
+        data.put("numeroOficio", generarNumeroOficio());
         // Generar ambos PDFs
         String pdfPathCarta = crearArchivoTemporal("cartaAceptacion", ".pdf");
         String pdfPathConstancia = crearArchivoTemporal("constanciaAceptacion", ".pdf");
