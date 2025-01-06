@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Carta de Aceptación</title>
+</head>
+<style>
+
+    @page  {
+        margin: 0;
+    }
+
+    body {
+        font-family: 'Poppins', sans-serif;
+        margin: 0;
+        padding: 0;
+        display: flex;
+        justify-content: center;
+        align-items: flex-start;
+        min-height: 100vh;
+        background-color: #f4f4f9;
+    }
+
+    /* Encabezado */
+    .encabezado {
+        max-width: 100%;
+        width: 80%;
+        height: auto;
+        object-fit: contain;
+        display: block;
+        margin: 0 auto;
+    }
+
+
+    h2 {
+        text-align: center;
+        margin-bottom: 20px;
+    }
+
+    p {
+        line-height: 1.6;
+        margin-bottom: 10px;
+        margin-left: 15px;
+        margin-right: 15px;
+        background-image: url('classpath:/static/img/imgagua.png');
+        background-repeat: no-repeat;
+        background-size: contain;
+        text-align: justify;
+    }
+
+    .datos-contacto {
+        text-align: left;
+        font-style: italic;
+    }
+
+    /* Estilo para imágenes */
+    .contenedor img {
+        max-width: 100%;
+        height: auto;
+        display: block;
+        margin: 0 auto;
+    }
+
+    /* Encabezado */
+    .encabezado {
+        width: 100%;
+        height: 200px;
+        object-fit: contain;
+    }
+
+    .footer{
+        margin-top: 0px;
+        position: relative;
+        bottom: 0;
+        width: 100%;
+    }
+
+
+    @media print {
+        .encabezado {
+            max-width: 100%;
+            width: 600px;
+            height: auto;
+        }
+
+        .contenedor {
+            width: 100%;
+            max-width: 800px;
+        }
+    }
+
+</style>
+<body>
+<div class="contenedor">
+    <!-- Encabezado -->
+    <img class="encabezado" th:src="@{classpath:/static/img/image_copy.png}" alt="Encabezado">
+    <h2><strong>OFICIO CARTA DE ACEPTACIÓN</strong></h2>
+
+    <!-- Información de contacto -->
+    <p class="datos-contacto">
+        FUNDACIÓN CALMA <br>
+        Cal. German Schereiber Nro. 276 Int. 240 Urb. Santa Ana <br>
+        Lima, Lima, 15036 <br>
+        +51 98025-4561 / +51 91057-1087 <br>
+        <a href="mailto:arearrhhcalma@gmail.com">arearrhhcalma@gmail.com</a><br>
+        San Isidro, <strong th:text="${fecha}">[Fecha]</strong>
+    </p>
+
+    <!-- Número de oficio -->
+    <p>Número de Oficio: FC/2024/PRAXIS/<strong th:text="${numeroOficio}">[Número de Oficio]</strong><br>
+        A quien corresponda:
+    </p>
+    <br>
+
+    <!-- Contenido del oficio -->
+    <div class="contenido">
+        <p>Asunto: Remisión de Constancia de Aceptación para Prácticas Pre Profesionales</p>
+
+        <p>
+            Por la presente, me permito remitir la constancia de aceptación de prácticas
+            profesionales de <strong th:text="${nombresApellidos}">[Nombre del Practicante]</strong>, quien ha sido admitido para
+            realizar dicha práctica en el área de <strong th:text="${area}">[Área]</strong> de la FUNDACIÓN CALMA.
+        </p>
+        <p>
+            Adjunto a este oficio, encontrará la constancia que detalla la fecha de inicio y
+            finalización de las prácticas, así como las funciones que <strong th:text="${liderArea}">[Líder del Área]</strong> llevará a cabo durante este periodo.
+            Esta práctica tiene como objetivo fomentar su desarrollo profesional en consonancia con su formación en Ciencia Política, y al mismo tiempo, contribuir a los objetivos de sensibilización y concientización sobre la Cultura de Paz que promueve nuestra fundación.
+        </p>
+        <p>
+            Agradezco la atención prestada y quedo a disposición para cualquier información
+            adicional que se requiera.
+        </p>
+        <br><br>
+        <p>Atentamente,</p>
+        <br><br><br><br>
+    </div>
+
+    <!-- Firma -->
+    <img class="firma" th:src="@{classpath:/static/img/firma.png}" alt="">
+    <img class="footer" th:src="@{classpath:/static/img/footer.png}"  alt="">
+
+</div>
+</body>
+</html>

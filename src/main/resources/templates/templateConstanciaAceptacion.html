@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.w3.org/1999/xhtml">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Constancia de Aceptacion</title>
+</head>
+<style>
+
+    @page  {
+        margin: 0;
+    }
+
+    body {
+        font-family: 'Poppins', sans-serif;
+        margin: 0;
+        padding: 0;
+        display: flex;
+        justify-content: center;
+        align-items: flex-start;
+        min-height: 100vh;
+        background-color: #ffffff;
+    }
+
+    .contenedor {
+        width: 100%;
+        padding: 0px;
+        background: #ffffff;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        border-radius: 0px;
+        overflow: visible;
+        margin: 0px auto;
+    }
+
+    h1 {
+        text-align: center;
+        color: rgb(22, 22, 101);
+    }
+
+    h2 {
+        text-align: center;
+        margin-bottom: 20px;
+    }
+
+    p {
+        line-height: 1.6;
+        background-image: url('classpath:/static/img/imgagua.png');
+        background-repeat: no-repeat;
+        background-size: contain;
+        text-align: justify;
+        margin-bottom: 10px;
+        margin-left: 15px;
+        margin-right: 15px;
+    }
+
+    .datos-contacto {
+        text-align: left;
+        font-style: italic;
+    }
+
+    /* Estilo para imágenes */
+    .contenedor img {
+        max-width: 100%;
+        height: auto;
+        display: block;
+        margin: 0 auto;
+    }
+
+    /* Encabezado */
+    .encabezado {
+        width: 100%;
+        height: 200px;
+        object-fit: contain;
+    }
+
+    /* Imagen inferior */
+    .inferior {
+        margin-top: 20px; /* Espaciado respecto al contenido */
+        position: relative;
+        bottom: 0;
+        width: 100%;
+    }
+
+</style>
+<body>
+<div class="contenedor">
+    <img class="encabezado" th:src="@{classpath:/static/img/Superior.png}" alt="">
+    <h1 class="Titulo"><u>CONSTANCIA DE ACEPTACIÓN</u></h1>
+    <p>San Isidro,  <strong th:text="${fechaDocumento}">[Día, Mes y Año]</strong> <br>
+        A quien corresponda,</p>
+    <p>
+        Por la presente, la <strong>FUNDACIÓN CALMA</strong>, identificado con <strong>RUC N° 20600792220</strong>,
+        deja constancia de la aceptación de <strong th:text="${nombresApellidos}">[Nombres y apellidos del pasante]</strong>, portador del DNI N°
+        <strong th:text="${dni}">[dni del pasante]</strong>, para realizar Prácticas <strong th:text="${tipoPracticas}">[Pre Profesionales o Profesionales]</strong>
+        en <strong th:text="${area}">[el Área o la Unidad de Negocio]</strong>. Esta área se enfoca en la sensibilización y
+        concientización sobre la instauración de una Cultura de Paz en la sociedad, alineándose con
+        su formación en <strong th:text="${carrera}">[Carrera del pasante]</strong>.
+    </p>
+    <p>
+        La práctica iniciará el día <strong th:text="${fechaIngreso}">[Inicio de funciones del pasante]</strong> y finalizará el
+        <strong th:text="${fechaSalida}">[Fin de funciones del pasante]</strong>. Durante este periodo, <strong th:text="${nombresApellidos}">[Nombres y apellidos del pasante]</strong>
+        desarrollará funciones clave, que incluirá asegurar la calidad y la eficacia de la lógica del servidor, Promover la innovación y la mejora continua en el área de desarrollo web, brindar soporte técnico al equipo de desarrollo de software.
+    </p>
+    <p>
+        Estamos comprometidos en proporcionar un entorno de aprendizaje enriquecedor que
+        contribuya al desarrollo profesional y personal de <strong th:text="${nombresApellidos}">[Nombres y apellidos del pasante]</strong>,
+        dotándolo de herramientas valiosas para su futuro en el campo laboral.
+    </p>
+    <p>Este documento se expide a solicitud del interesado para efectos pertinentes.</p>
+    <p>Atentamente,</p>
+    <br><br><br><br>
+
+    <img th:src="@{classpath:/static/img/firma.png}" alt="">
+
+    <p style="color: #aaaaaa;">Certificado No. 2024-FC-[Número de documento hecho]</p>
+    <p><strong>CONSTANCIA DE ACEPTACIÓN</strong></p>
+    <img class="inferior" th:src="@{classpath:/static/img/inferior2.0.png}" alt="">
+</div>
+
+</body>
+</html>
