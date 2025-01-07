@@ -12,7 +12,7 @@ public class NumeroOficio {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int idNumeroOficio;
-    @Column(nullable = true, unique = true)
+    @Column(unique = true)
     private int numeroOficio;
 
 

@@ -15,9 +15,7 @@ import com.itextpdf.layout.Document;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.InputStreamResource;
-import org.springframework.http.ResponseEntity;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
@@ -35,16 +33,21 @@ import java.util.*;
 @Service
 @RequiredArgsConstructor
 public class DocumentoServiceImpl implements DocumentoService {
-    @Autowired
-    private NumeroOficioRepository numeroOficioRepository;
 
+    private final NumeroOficioRepository numeroOficioRepository;
+    private final PracticanteVoluntarioService service;
     private final TemplateEngine templateEngine;
     private final JavaMailSender mailSender;
-    private static final String UPLOAD_DIR = "src/main/resources/files/Prueba1.xlsx";
+    private final PracticanteVoluntarioRepository repository;
+    private final BuscarService buscarService;
+    private static final String UPLOAD_DIR = "src/main/resources/files/CARTA_DE_ACEPTACIÓN.xlsx";
 
-    private static final String BASE_URL = "https://improved-xylophone-pjrw9vj7j74q3vjw-8080.app.github.dev/api/downloadPdf";
+    //private static final String BASE_URL = "https://improved-xylophone-pjrw9vj7j74q3vjw-8080.app.github.dev/api/downloadPdf";
+    private static final String BASE_URL = "http://localhost:8080/api/downloadPdf";
+
     private static final String BUTTON_STYLE = "background-color: #00BFFF; color: white; padding: 10px 20px; text-align: center; text-decoration: none; display: inline-block; border-radius: 4px; border: none;";
 
+    //Genera PDF y retorna el link de descarga PDF SERVICE
     @Override
     public String generarPdf(Map<String, Object> datos, String templateName, String outputPath) {
         try (FileOutputStream fos = new FileOutputStream(outputPath)) {
@@ -55,12 +58,12 @@ public class DocumentoServiceImpl implements DocumentoService {
             Document document = new Document(pdfDoc);
             document.setMargins(0, 0, 0, 0);
             HtmlConverter.convertToPdf(htmlContent, fos);
-            return generarLinkDescarga(BASE_URL, outputPath);
+            return generarLinkDescarga(outputPath);
         } catch (IOException e) {
             throw new RuntimeException("Error al generar el PDF", e);
         }
     }
-
+    //Obtiene el recurso PDF temporal PDF SERVICE
     @Override
     public InputStreamResource obtenerRecursoPdfTemporal(String pdfPath) throws IOException {
         File file = new File(pdfPath);
@@ -69,33 +72,27 @@ public class DocumentoServiceImpl implements DocumentoService {
         }
         return new InputStreamResource(new FileInputStream(file));
     }
-
-    private String generarLinkDescarga(String baseUrl, String pdfPath) {
-        return baseUrl + "?path=" + pdfPath;
+    //Enlace de link de descarga y la ruta de la plantilla pdf PDFSERVICE
+    private String generarLinkDescarga(String pdfPath) {
+        return DocumentoServiceImpl.BASE_URL + "?path=" + pdfPath;
     }
-
-    private String crearArchivoTemporal(String prefix, String suffix) {
+    //Crear un archivo temporal pdf PDF SERVICE
+    private String crearArchivoTemporal(String prefix) {
         try {
-            File tempPDF = File.createTempFile(prefix, suffix);
+            File tempPDF = File.createTempFile(prefix, ".pdf");
             return tempPDF.getAbsolutePath();
         } catch (IOException e) {
             throw new RuntimeException("Error al crear el archivo temporal", e);
         }
     }
-
+    //Procesa la plantilla thymeleaf con los parametros adicionado PDF SERVICE
+    @Override
     public String processThymeleafTemplate(String templateName, Map<String, Object> params) {
         Context context = new Context();
         context.setVariables(params);
         return templateEngine.process(templateName, context);
     }
-
-
-    private String generarNumeroOficio() {
-
-        int numeroSecuencial = obtenerSiguienteNumeroSecuencial();
-        return String.format("%03d", numeroSecuencial);
-    }
-
+    //PDF
     private int obtenerSiguienteNumeroSecuencial() {
         synchronized (this) {
             Optional<NumeroOficio> optionalNumeroOficio = numeroOficioRepository.findById(1L);
@@ -106,7 +103,7 @@ public class DocumentoServiceImpl implements DocumentoService {
                 numeroOficio.setNumeroOficio(1);
             } else {
                 numeroOficio = optionalNumeroOficio.get();
-                numeroOficio.setNumeroOficio(numeroOficio.getNumeroOficio()+ + 1);
+                numeroOficio.setNumeroOficio(numeroOficio.getNumeroOficio()+ 1);
             }
 
             numeroOficio = numeroOficioRepository.save(numeroOficio);
@@ -115,10 +112,21 @@ public class DocumentoServiceImpl implements DocumentoService {
         }
     }
 
+
+    private String generarNumeroOficio() {
+
+        int numeroSecuencial = obtenerSiguienteNumeroSecuencial();
+        return String.format("%03d", numeroSecuencial);
+    }
+
+    public String formatearFecha(String fechaEnString) {
+        LocalDate fecha = LocalDate.parse(fechaEnString);
+        return fecha.format(DateTimeFormatter.ofPattern("dd 'de' MMMM 'de' yyyy"));
+    }
+
+
     public Map<String, Object> recibirDatos(String id) {
         Optional<PracticanteVoluntario> optionalPracticante = service.findById(Long.valueOf(id));
-        LocalDate now = LocalDate.now();
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd MMMM yyyy");
 
         if (optionalPracticante.isPresent()) {
             PracticanteVoluntario practicante = optionalPracticante.get();
@@ -135,8 +143,8 @@ public class DocumentoServiceImpl implements DocumentoService {
             datos.put("area", practicante.getArea());
             datos.put("liderArea", practicante.getLiderArea());
             datos.put("puesto", practicante.getPuesto());
-            datos.put("fechaIngreso", practicante.getFechaIngreso());
-            datos.put("fechaSalida", practicante.getFechaSalida());
+            datos.put("fechaIngreso", formatearFecha(practicante.getFechaIngreso()));
+            datos.put("fechaSalida", formatearFecha(practicante.getFechaSalida()));
 
             return datos;
         } else {
@@ -145,9 +153,6 @@ public class DocumentoServiceImpl implements DocumentoService {
             return error;
         }
     }
-
-    @Autowired
-    private PracticanteVoluntarioService service;
 
     @Override
     public void enviarCarta(String email, String id) {
@@ -160,8 +165,8 @@ public class DocumentoServiceImpl implements DocumentoService {
         data.put("fechaDocumento", LocalDate.now().format(DateTimeFormatter.ofPattern("dd MMMM yyyy")));
         data.put("numeroOficio", generarNumeroOficio());
         // Generar ambos PDFs
-        String pdfPathCarta = crearArchivoTemporal("cartaAceptacion", ".pdf");
-        String pdfPathConstancia = crearArchivoTemporal("constanciaAceptacion", ".pdf");
+        String pdfPathCarta = crearArchivoTemporal("cartaAceptacion");
+        String pdfPathConstancia = crearArchivoTemporal("constanciaAceptacion");
 
         String linkDescargaCarta = generarPdf(data, "templateCartaAceptacion", pdfPathCarta);
         String linkDescargaConstancia = generarPdf(data, "templateConstanciaAceptacion", pdfPathConstancia);
@@ -217,99 +222,82 @@ public class DocumentoServiceImpl implements DocumentoService {
             throw new RuntimeException("Error al enviar el correo", e);
         }
     }
-
-    @Autowired
-    private PracticanteVoluntarioRepository repository;
-
-    @Autowired
-    private BuscarService buscarService;
-
+    //Realiza una comparación de datos entre el formulario y el excel
+    //Valida si los campos son iguales convirtiendolos en mayúsculas y omitiendo los espacios iniciales
+    // y finales
     boolean compararDatos(String resultadoData, String datoPracticate) {
-        return resultadoData.trim().toUpperCase().equals(datoPracticate.trim().toUpperCase());
+        return resultadoData.trim().equalsIgnoreCase(datoPracticate.trim());
     }
-    @Override
-    public PracticanteVoluntario save(PracticanteVoluntario practicante) {
-        StringBuilder diferencias = new StringBuilder();
+    //Valida un campo con otro, en caso de error se añade a la lista de errores el campo que no coincide
+    private void validarCampo(Map<String, String> datosRegistro, String clave, String valorComparar,
+                              String nombreCampo, List<String> errores) {
+        if (!compararDatos(datosRegistro.get(clave), valorComparar)) {
+            errores.add(nombreCampo + " no coincide.");
+        }
+    }
+    //Valida que los datos del formulario sean iguales a los datos del excel
+    private void validarCoincidenciaDatos(Map<String, String> datosRegistro, PracticanteVoluntario practicante) {
         List<String> errores = new ArrayList<>();
 
+        validarCampo(datosRegistro, "NOMBRES Y APELLIDOS", practicante.getNombresApellidos(), "Nombres y Apellidos", errores);
+        validarCampo(datosRegistro, "CORREO ELECTRÓNICO", practicante.getCorreoElectronico(), "Correo electrónico", errores);
+        validarCampo(datosRegistro, "DNI", practicante.getDni(), "DNI", errores);
+        validarCampo(datosRegistro, "CELULAR", practicante.getCelular(), "Celular", errores);
+        validarCampo(datosRegistro, "Univesidad o instituto", practicante.getUniversidadOInstituto(), "Universidad o Instituto", errores);
+        validarCampo(datosRegistro, "CODIGO DE ESTUDIANTE (EN CASO NO TENGA LLENAR CON 0000)", practicante.getCodigoEstudiante(), "Código de estudiante", errores);
+        validarCampo(datosRegistro, "CARRERA", practicante.getCarrera(), "Carrera", errores);
+        validarCampo(datosRegistro, "TIPO DE PRÁCTICAS", practicante.getTipoPracticas(), "Tipo de prácticas", errores);
+        validarCampo(datosRegistro, "ÁREA", practicante.getArea(), "Área", errores);
+        validarCampo(datosRegistro, "LÍDER DEL ÁREA", practicante.getLiderArea(), "Líder de área", errores);
+        validarCampo(datosRegistro, "PUESTO", practicante.getPuesto(), "Puesto", errores);
+        validarCampo(datosRegistro, "INGRESO", practicante.getFechaIngreso(), "Fecha de ingreso", errores);
+        validarCampo(datosRegistro, "SALIDA", practicante.getFechaSalida(), "Fecha de salida", errores);
+
+        if (!errores.isEmpty()) {
+            throw new DatosNoCoincidenException(errores);
+        }
+    }
+    //guarda la solicitud practicante de la informacion del excel en la base de datos
+    private PracticanteVoluntario guardarPracticante(Map<String, String> datosRegistro) {
+        PracticanteVoluntario practicante = new PracticanteVoluntario();
+
+        practicante.setNombresApellidos(datosRegistro.get("NOMBRES Y APELLIDOS"));
+        practicante.setCorreoElectronico(datosRegistro.get("CORREO ELECTRÓNICO"));
+        practicante.setDni(datosRegistro.get("DNI"));
+        practicante.setCelular(datosRegistro.get("CELULAR"));
+        practicante.setUniversidadOInstituto(datosRegistro.get("Univesidad o instituto"));
+        practicante.setCodigoEstudiante(datosRegistro.get("CODIGO DE ESTUDIANTE (EN CASO NO TENGA LLENAR CON 0000)"));
+        practicante.setCarrera(datosRegistro.get("CARRERA"));
+        practicante.setTipoPracticas(datosRegistro.get("TIPO DE PRÁCTICAS"));
+        practicante.setArea(datosRegistro.get("ÁREA"));
+        practicante.setLiderArea(datosRegistro.get("LÍDER DEL ÁREA"));
+        practicante.setPuesto(datosRegistro.get("PUESTO"));
+        practicante.setFechaIngreso(datosRegistro.get("INGRESO"));
+        practicante.setFechaSalida(datosRegistro.get("SALIDA"));
+
+        return repository.save(practicante);
+    }
+
+
+    @Override
+    public PracticanteVoluntario save(PracticanteVoluntario practicante) {
         try {
-            Map<String, String> resultado = buscarService.buscarRegistro(UPLOAD_DIR , practicante.getCorreoElectronico());
+            //Obtener datos del registro
+            Map<String, String> datosRegistro = buscarService.buscarRegistro(UPLOAD_DIR, practicante.getCorreoElectronico());
 
-            // Función auxiliar para comparar las cadenas
+            //Validar que ambos datos sean iguales
+            validarCoincidenciaDatos(datosRegistro, practicante);
 
+            //Crea y guarda la información del practicante del excel en la base de datos
+            PracticanteVoluntario practicanteGuardado = guardarPracticante(datosRegistro);
 
-            // Comparar cada campo y agregar errores si hay diferencias
-            if (!compararDatos(resultado.get("nombresApellidos"), practicante.getNombresApellidos())) {
-                errores.add("Nombres y Apellidos no coinciden.");
-            }
-            if (!compararDatos(resultado.get("correoElectronico"), practicante.getCorreoElectronico())) {
-                errores.add("Correo electrónico no coincide.");
-            }
-            if (!compararDatos(resultado.get("dni"), practicante.getDni())) {
-                errores.add("DNI no coincide.");
-            }
-            if (!compararDatos(resultado.get("celular"), practicante.getCelular())) {
-                errores.add("Celular no coincide.");
-            }
-            if (!compararDatos(resultado.get("universidadOInstituto"), practicante.getUniversidadOInstituto())) {
-                errores.add("Universidad o Instituto no coincide.");
-            }
-            if (!compararDatos(resultado.get("codigoEstudiante"), practicante.getCodigoEstudiante())) {
-                errores.add("Código de estudiante no coincide.");
-            }
-            if (!compararDatos(resultado.get("carrera"), practicante.getCarrera())) {
-                errores.add("Carrera no coincide.");
-            }
-            if (!compararDatos(resultado.get("tipoPracticas"), practicante.getTipoPracticas())) {
-                errores.add("Tipo de prácticas no coincide.");
-            }
-            if (!compararDatos(resultado.get("area"), practicante.getArea())) {
-                errores.add("Área no coincide.");
-            }
-            if (!compararDatos(resultado.get("liderArea"), practicante.getLiderArea())) {
-                errores.add("Líder de área no coincide.");
-            }
-            if (!compararDatos(resultado.get("puesto"), practicante.getPuesto())) {
-                errores.add("Puesto no coincide.");
-            }
-            if (!compararDatos(resultado.get("fechaIngreso"), practicante.getFechaIngreso())) {
-                errores.add("Fecha de ingreso no coincide.");
-            }
-            if (!compararDatos(resultado.get("fechaSalida"), practicante.getFechaSalida())) {
-                errores.add("Fecha de salida no coincide.");
-            }
+            //Envia la carta
+            enviarCarta(practicanteGuardado.getCorreoElectronico(),
+                    String.valueOf(practicanteGuardado.getIdPracticanteVoluntario()));
 
-            // Si existen diferencias, devolvemos las respuestas con los errores
-            if (!errores.isEmpty()) {
-                throw new DatosNoCoincidenException(errores);
-            }
-
-            PracticanteVoluntario practicanteVoluntario = new PracticanteVoluntario();
-
-            practicanteVoluntario.setNombresApellidos(resultado.get("nombresApellidos"));
-            practicanteVoluntario.setCorreoElectronico(resultado.get("correoElectronico"));
-            practicanteVoluntario.setDni(resultado.get("dni"));
-            practicanteVoluntario.setCelular(resultado.get("celular"));
-            practicanteVoluntario.setUniversidadOInstituto(resultado.get("universidadOInstituto"));
-            practicanteVoluntario.setCodigoEstudiante(resultado.get("codigoEstudiante"));
-            practicanteVoluntario.setCarrera(resultado.get("carrera"));
-            practicanteVoluntario.setTipoPracticas(resultado.get("tipoPracticas"));
-            practicanteVoluntario.setArea(resultado.get("area"));
-            practicanteVoluntario.setLiderArea(resultado.get("liderArea"));
-            practicanteVoluntario.setPuesto(resultado.get("puesto"));
-            practicanteVoluntario.setFechaIngreso(resultado.get("fechaIngreso"));
-            practicanteVoluntario.setFechaSalida(resultado.get("fechaSalida"));
-
-
-            // Si no hay errores, guardamos el practicante y enviamos la carta
-            PracticanteVoluntario savedPracticante = repository.save(practicanteVoluntario);
-            enviarCarta(practicanteVoluntario.getCorreoElectronico(), String.valueOf(practicanteVoluntario.getIdPracticanteVoluntario()));
-
-            // Retornamos el objeto guardado
-            return savedPracticante;
-
+            return practicanteGuardado;
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            throw new RuntimeException("Error al procesar el registro del practicante", e);
         }
     }
 }

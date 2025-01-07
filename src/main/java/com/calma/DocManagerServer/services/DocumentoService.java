@@ -16,7 +16,7 @@ public interface DocumentoService {
 
     void enviarCarta(String email, String id) throws MessagingException;
 
-    public InputStreamResource obtenerRecursoPdfTemporal(String pdfPath) throws IOException;
+    InputStreamResource obtenerRecursoPdfTemporal(String pdfPath) throws IOException;
 
     Object save(PracticanteVoluntario practicante);
 }

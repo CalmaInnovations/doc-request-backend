@@ -1,9 +1,7 @@
 package com.calma.DocManagerServer.controller;
 
 import com.calma.DocManagerServer.model.PracticanteVoluntario;
-import com.calma.DocManagerServer.repository.PracticanteVoluntarioRepository;
 import com.calma.DocManagerServer.services.PracticanteVoluntarioService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -13,11 +11,13 @@ import java.util.List;
 @RestController
 @RequestMapping("/solicitud")
 @CrossOrigin(origins = "https://docmanager-client.onrender.com/")
-
 public class SolicitudController {
 
-    @Autowired
-    private PracticanteVoluntarioService service;
+    private final PracticanteVoluntarioService service;
+
+    public SolicitudController(PracticanteVoluntarioService service) {
+        this.service = service;
+    }
 
     @GetMapping
     public List<PracticanteVoluntario> getAll() {
@@ -38,7 +38,7 @@ public class SolicitudController {
 
     @PutMapping("/{id}")
     public ResponseEntity<PracticanteVoluntario> update(@PathVariable Long id, @RequestBody PracticanteVoluntario practicante) {
-        if (!service.findById(id).isPresent()) {
+        if (service.findById(id).isEmpty()) {
             return ResponseEntity.notFound().build();
         }
         practicante.setIdPracticanteVoluntario(id);
@@ -47,7 +47,7 @@ public class SolicitudController {
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(@PathVariable Long id) {
-        if (!service.findById(id).isPresent()) {
+        if (service.findById(id).isEmpty()) {
             return ResponseEntity.notFound().build();
         }
         service.deleteById(id);

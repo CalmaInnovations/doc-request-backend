@@ -1,16 +1,14 @@
 package com.calma.DocManagerServer.exception;
 
-import java.util.List;
+import lombok.Getter;
 
+import java.util.List;
+@Getter
 public class DatosNoCoincidenException extends RuntimeException{
-    private List<String> errores;
+    private final List<String> errores;
 
     public DatosNoCoincidenException(List<String> errores) {
         super("Errores de validación de datos");
         this.errores = errores;
-    }
-
-    public List<String> getErrores() {
-        return errores;
     }
 }

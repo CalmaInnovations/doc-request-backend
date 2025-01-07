@@ -1,4 +1,4 @@
 package com.calma.DocManagerServer.services;
 
-public interface SolicitudService {
+public interface GeneradorPdfService {
 }

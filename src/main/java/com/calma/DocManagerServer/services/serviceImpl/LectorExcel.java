@@ -7,7 +7,6 @@ import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.stereotype.Service;
 
-import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.time.LocalDate;
@@ -20,7 +19,7 @@ public class LectorExcel implements ILectorExcel {
     public List<DatosDTO> leerExcel(String filePath) {
         List<DatosDTO> datosList = new ArrayList<>();
 
-        try (FileInputStream fileInputStream = new FileInputStream(new File(filePath));
+        try (FileInputStream fileInputStream = new FileInputStream(filePath);
              Workbook workbook = new XSSFWorkbook(fileInputStream)) {
 
             Sheet sheet = workbook.getSheetAt(0);
