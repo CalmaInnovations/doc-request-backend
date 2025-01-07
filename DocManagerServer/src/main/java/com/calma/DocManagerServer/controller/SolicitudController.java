@@ -1,15 +1,19 @@
 package com.calma.DocManagerServer.controller;
 
 import com.calma.DocManagerServer.model.PracticanteVoluntario;
-import com.calma.DocManagerServer.service.PracticanteVoluntarioService;
+import com.calma.DocManagerServer.repository.PracticanteVoluntarioRepository;
+import com.calma.DocManagerServer.services.PracticanteVoluntarioService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+
 @RestController
 @RequestMapping("/solicitud")
+@CrossOrigin(origins = "https://docmanager-client.onrender.com/")
+
 public class SolicitudController {
 
     @Autowired
@@ -49,4 +53,5 @@ public class SolicitudController {
         service.deleteById(id);
         return ResponseEntity.ok().build();
     }
+
 }
