@@ -30,7 +30,7 @@ public class ExcelController {
 
     @GetMapping("/buscar")
     public Map<String, String> buscarRegistro(@RequestParam String correo) {
-        String excelPath = "C:\\Prueba\\Prueba1.xlsx";
+        String excelPath = "C:\\Prueba\\CARTA DE ACEPTACIÓN.xlsx";
         try {
             Map<String, String> resultado = buscarService.buscarRegistro(excelPath, correo);
             if (resultado != null) {
@@ -62,6 +62,8 @@ public class ExcelController {
                     .body("Error al procesar el archivo: " + e.getMessage());
         }
     }
+
+
 
 
 }

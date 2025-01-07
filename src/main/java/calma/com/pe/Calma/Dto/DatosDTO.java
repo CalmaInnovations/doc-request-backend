@@ -124,19 +124,19 @@ public class DatosDTO {
     @Override
     public String toString() {
         return "DatosPracticasRequest{" +
-                "nombresApellidos='" + nombresApellidos + '\'' +
-                ", correoElectronico='" + correoElectronico + '\'' +
-                ", dni='" + dni + '\'' +
-                ", celular='" + celular + '\'' +
-                ", universidadOInstituto='" + universidadOInstituto + '\'' +
-                ", codigoEstudiante='" + codigoEstudiante + '\'' +
-                ", carrera='" + carrera + '\'' +
-                ", tipoPracticas='" + tipoPracticas + '\'' +
-                ", area='" + area + '\'' +
-                ", liderArea='" + liderArea + '\'' +
-                ", puesto='" + puesto + '\'' +
-                ", fechaIngreso=" + fechaIngreso +
-                ", fechaSalida=" + fechaSalida +
+                "NOMBRES Y APELLIDOS='" + nombresApellidos + '\'' +
+                ", CORREO ELECTRÓNICO='" + correoElectronico + '\'' +
+                ", DNI='" + dni + '\'' +
+                ", CELULAR='" + celular + '\'' +
+                ", Univesidad o instituto='" + universidadOInstituto + '\'' +
+                ", CODIGO DE ESTUDIANTE='" + codigoEstudiante + '\'' +
+                ", CARRERA='" + carrera + '\'' +
+                ", TIPO DE PRÁCTICAS='" + tipoPracticas + '\'' +
+                ", ÁREA='" + area + '\'' +
+                ", LÍDER DEL ÁREA='" + liderArea + '\'' +
+                ", PUESTO='" + puesto + '\'' +
+                ", INGRESO=" + fechaIngreso +
+                ", SALIDA=" + fechaSalida +
                 '}';
     }
 }
